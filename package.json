@@ -1,0 +1,40 @@
+{
+  "name": "fastify-inertia",
+  "version": "1.0.0",
+  "description": "A lightweight Fastify plugin for Inertia.js that lets you build modern single-page applications with server-side rendering.",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "npx tsc",
+    "prepare": "npm run build"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "inertia",
+    "fastify",
+    "fastify-inertia",
+    "fastify-plugin",
+    "fastify-inertia-plugin"
+  ],
+  "author": "Mahendra Chavda",
+  "license": "MIT",
+  "devDependencies": {
+    "fastify": "^5.5.0",
+    "typescript": "^5.9.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mahendra7041/fastify-inertia.git"
+  },
+  "peerDependencies": {
+    "vite": "^7.1.4"
+  },
+  "dependencies": {
+    "@types/node": "^24.3.0",
+    "fastify-plugin": "^5.0.1",
+    "fp": "^0.1.0",
+    "node-inertiajs": "^1.0.2"
+  }
+}
