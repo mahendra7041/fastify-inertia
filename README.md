@@ -1,6 +1,6 @@
 # express-inertia
 
-[![npm version](https://img.shields.io/npm/v/express-inertia)](https://www.npmjs.com/package/express-inertia)
+[![npm version](https://img.shields.io/npm/v/fastify-inertiajs)](https://www.npmjs.com/package/fastify-inertiajs)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A lightweight Fastify plugin for [Inertia.js](https://inertiajs.com/) that lets you build modern single-page applications with server-side rendering. It allows seamless integration of React, Vue, or Svelte components while preserving the simplicity of classic apps.
