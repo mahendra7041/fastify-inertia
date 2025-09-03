@@ -1,11 +1,10 @@
 import fp from "fastify-plugin";
-import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 import {
   defineConfig,
   Inertia,
   Flash,
   type InertiaConfig,
-  ResolvedConfig,
 } from "node-inertiajs";
 import { ViteDevServer, createServer as createViteServer } from "vite";
 
@@ -70,9 +69,9 @@ export default fp<InertiaConfig>(async function inertiaPlugin(
   // Add Inertia instance to reply
   fastify.addHook("onRequest", (request, reply, done) => {
     // @ts-ignore
-    reply.raw.redirect = function (...args) {
+    reply.raw.redirect = function (statusCode, url) {
       // @ts-ignore
-      reply.redirect(...args);
+      reply.redirect(url, statusCode);
     };
     reply.inertia = new Inertia(request.raw, reply.raw, config, vite);
     done();
