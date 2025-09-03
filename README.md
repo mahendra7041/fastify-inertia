@@ -37,7 +37,7 @@ npm run dev
 ### Prerequisites
 
 - Node.js 18 or higher
-- Express.js
+- Fastify
 - Vite
 
 ### Step 1: Create a Vite Project
@@ -59,17 +59,17 @@ cd my-inertia-app
 
 ### Step 2: Install Required Packages
 
-Install the necessary dependencies for Express and Inertia:
+Install the necessary dependencies for Fastify and Inertia:
 
 ```bash
 # For React (used in this guide)
-npm install express-inertia express express-session @inertiajs/react
+npm install fastify-inertiajs @fastify/cookie @fastify/session @fastify/static @inertiajs/react
 
 # For Vue
-npm install express-inertia express express-session @inertiajs/vue3
+npm install fastify-inertiajs @fastify/cookie @fastify/session @fastify/static @inertiajs/vue3
 
 # For Svelte
-npm install express-inertia express express-session @inertiajs/svelte
+npm install fastify-inertiajs @fastify/cookie @fastify/session @fastify/static @inertiajs/svelte
 
 # Additional dev dependencies
 npm install -D nodemon
@@ -97,50 +97,47 @@ my-inertia-app/
 ### Step 4: Express Server Setup (`server.js`)
 
 ```javascript
-import express from "express";
-import session from "express-session";
-import inertia from "express-inertia";
+import fastify from "fastify";
+import fastifyStatic from "@fastify/static";
+import fastifyCookie from "@fastify/cookie";
+import fastifySession from "@fastify/session";
+import inertiaConfig from "./configs/inertia.config.js";
+import sessionConfig from "./configs/session.config.js";
+import inertia from "fastify-inertiajs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function bootstrap() {
-  const app = express();
-  const PORT = process.env.PORT || 3000;
+  const app = fastify();
+  const PORT = process.env.PORT || 5000;
 
-  // Serve static assets (only in production)
+  // Serve static files in production
   if (process.env.NODE_ENV === "production") {
-    app.use(express.static("build/client", { index: false }));
+    await app.register(fastifyStatic, {
+      root: path.join(__dirname, "build/client"),
+      prefix: "/",
+      decorateReply: false,
+    });
   }
 
-  // Session middleware (required for flash messages)
-  app.use(
-    session({
-      secret: process.env.SESSION_SECRET || "secret",
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        secure: process.env.NODE_ENV === "production",
-      },
-    })
-  );
+  await app.register(fastifyCookie);
+  await app.register(fastifySession, sessionConfig);
+  await app.register(inertia, inertiaConfig);
 
-  // Inertia middleware setup
-  app.use(
-    await inertia({
-      rootElementId: "root", // DOM element ID for Inertia app (default: app)
-      assetsVersion: "v1", // change to bust client-side cache
-      ssrEnabled: true, // enable SSR
-      ssrEntrypoint: "src/ssr.jsx", // entry file for SSR in dev
-      ssrBuildEntrypoint: "build/ssr/ssr.js", // built SSR file for production
-    })
-  );
-
-  // Example route
-  app.get("/", (req, res) => {
-    res.inertia.render("home");
+  app.get("/", (req, reply) => {
+    reply.inertia.render("home");
   });
 
-  app.listen(PORT, () => {
+  try {
+    await app.listen({ port: PORT });
     console.log(`Server is running at http://localhost:${PORT}`);
-  });
+  } catch (err) {
+    console.error(err);
+    process.exit(1);
+  }
 }
 
 bootstrap().catch(console.error);
@@ -227,89 +224,50 @@ export default function render(page) {
 Initializes and returns the Express middleware.
 
 ```javascript
-app.use(await inertia(config));
+await fastify.register(inertia, inertiaConfig);
 ```
 
-### `res.inertia.render(component, props?)`
+### `reply.inertia.render(component, props?)`
 
 Renders an Inertia page component.
 
 ```javascript
-app.get('/users', (req, res) => {
+fastify.get('/users', (request, reply) => {
   const users = await User.findAll();
 
-  res.inertia.render('user/index', {
+  reply.inertia.render('user/index', {
     users: users,
     page: req.query.page || 1
   });
 });
 ```
 
-### `res.inertia.share(data)`
+### `reply.inertia.share(data)`
 
 Shares data with the current and subsequent requests.
 
 ```javascript
-app.use((req, res, next) => {
-  res.inertia.share({
-    auth: {
-      user: req.user,
-      permissions: req.user?.permissions,
-    },
-  });
-  next();
+reply.inertia.share({
+  auth: {
+    user: req.user,
+    permissions: req.user?.permissions,
+  },
 });
 ```
 
-### `res.inertia.redirect(urlOrStatus, url?)`
+### `reply.inertia.redirect(urlOrStatus, url?)`
 
 Redirects the user to a different location while preserving Inertia’s client-side navigation.
 
 ```javascript
-app.get("/home", (req, res) => {
+fastify.get("/home", (req, reply) => {
   // Redirect with default status (302 Found)
-  res.inertia.redirect("/dashboard");
+  reply.inertia.redirect("/dashboard");
 
   // Redirect with explicit status
-  res.inertia.redirect(301, "/new-home");
+  reply.inertia.redirect(301, "/new-home");
 });
 ```
-
-## Examples
-
-### Shared Data Example
-
-```javascript
-// Middleware to share data across all requests
-app.use((req, res, next) => {
-  res.inertia.share({
-    auth: {
-      user: req.user,
-      isAdmin: req.user?.role === "admin",
-    },
-  });
-  next();
-});
-```
-
-### Form Handling Example
-
-```javascript
-app.post("/contact", async (req, res) => {
-  try {
-    await Contact.create(req.body);
-    req.flash("success", "Message sent successfully!");
-    res.inertia.redirect("/contact");
-  } catch (error) {
-    req.flash("error", "Failed to send message");
-    res.inertia.redirect("/contact");
-  }
-});
-```
-
-Here’s an updated **Contributing section** with a clear note about discussing **breaking changes** before implementation:
-
----
 
 ## Contributing
 
@@ -352,7 +310,7 @@ This project is licensed under the MIT License - see the [LICENSE](https://opens
 
 ## Resources
 
-- [Inertia.js Documentation](https://inertiajs.com/)
-- [React.js Documentation](https://react.dev/)
-- [Express.js Documentation](https://expressjs.com/)
+- [Inertiajs Documentation](https://inertiajs.com/)
+- [Reactjs Documentation](https://react.dev/)
+- [Fastify Documentation](https://fastify.dev/)
 - [Vite Documentation](https://vitejs.dev/)
