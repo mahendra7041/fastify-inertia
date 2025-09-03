@@ -1,15 +1,15 @@
 import fp from "fastify-plugin";
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 import { defineConfig, Inertia, Flash, InertiaConfig } from "node-inertiajs";
 import { ViteDevServer, createServer as createViteServer } from "vite";
 
 declare module "fastify" {
   interface FastifyReply {
     inertia: InstanceType<typeof Inertia>;
-    flash?: InstanceType<typeof Flash>;
   }
   interface FastifyRequest {
     session?: Record<string, any>;
+    flash: Flash;
   }
 }
 
@@ -22,6 +22,16 @@ export default fp<InertiaConfig>(async function inertiaPlugin(
   if (!opts) {
     throw new Error("Inertia.js configuration is required");
   }
+  opts.sharedData = {
+    errors: (request: FastifyRequest) => request.flash.get("errors") || {},
+    flash: (request: FastifyRequest) => {
+      return {
+        error: request.flash.get("error") || null,
+        success: request.flash.get("success") || null,
+      };
+    },
+    ...opts.sharedData,
+  };
   const config = defineConfig(opts);
 
   let vite: ViteDevServer | undefined;
