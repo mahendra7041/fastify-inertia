@@ -70,7 +70,10 @@ export default fp<InertiaConfig>(async function inertiaPlugin(
   // Add Inertia instance to reply
   fastify.addHook("onRequest", (request, reply, done) => {
     // @ts-ignore
-    reply.raw.redirect = reply.redirect.bind(reply);
+    reply.raw.redirect = function (...args) {
+      // @ts-ignore
+      reply.redirect(...args);
+    };
     reply.inertia = new Inertia(request.raw, reply.raw, config, vite);
     done();
   });
