@@ -101,8 +101,6 @@ import fastify from "fastify";
 import fastifyStatic from "@fastify/static";
 import fastifyCookie from "@fastify/cookie";
 import fastifySession from "@fastify/session";
-import inertiaConfig from "./configs/inertia.config.js";
-import sessionConfig from "./configs/session.config.js";
 import inertia from "fastify-inertiajs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -124,8 +122,25 @@ async function bootstrap() {
   }
 
   await app.register(fastifyCookie);
-  await app.register(fastifySession, sessionConfig);
-  await app.register(inertia, inertiaConfig);
+
+  await app.register(fastifySession, {
+    secret:
+      process.env.SESSION_SECRET ||
+      "a secret with minimum length of 32 characters",
+    saveUninitialized: true,
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 24,
+      secure: process.env.NODE_ENV === "production",
+    },
+  });
+
+  await app.register(inertia, {
+    rootElementId: "root",
+    assetsVersion: "v1",
+    ssrEnabled: true,
+    ssrEntrypoint: "src/ssr.jsx",
+    ssrBuildEntrypoint: "build/ssr/ssr.js",
+  });
 
   app.get("/", (req, reply) => {
     reply.inertia.render("home");
