@@ -26,7 +26,7 @@ export default fp<InertiaConfig>(async function inertiaPlugin(
 
   let vite: ViteDevServer | undefined;
 
-  if (!config.vite && process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV !== "production") {
     vite = await createViteServer(config.vite);
 
     fastify.addHook("onRequest", (request, reply, done) => {
