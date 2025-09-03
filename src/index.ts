@@ -1,5 +1,5 @@
 import fp from "fastify-plugin";
-import type { FastifyInstance, FastifyRequest } from "fastify";
+import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { defineConfig, Inertia, Flash, InertiaConfig } from "node-inertiajs";
 import { ViteDevServer, createServer as createViteServer } from "vite";
 
@@ -8,12 +8,10 @@ declare module "fastify" {
     inertia: InstanceType<typeof Inertia>;
   }
   interface FastifyRequest {
-    session?: Record<string, any>;
     flash: InstanceType<typeof Flash>;
+    session?: Record<string, any>;
   }
 }
-
-// interface InertiaPluginOptions
 
 export default fp<InertiaConfig>(async function inertiaPlugin(
   fastify: FastifyInstance,
@@ -22,20 +20,20 @@ export default fp<InertiaConfig>(async function inertiaPlugin(
   if (!opts) {
     throw new Error("Inertia.js configuration is required");
   }
+
+  // Merge defaults first, user overrides after
   opts.sharedData = {
     errors: (request: FastifyRequest) => request.flash.get("errors") || {},
-    flash: (request: FastifyRequest) => {
-      return {
-        error: request.flash.get("error") || null,
-        success: request.flash.get("success") || null,
-      };
-    },
+    flash: (request: FastifyRequest) => ({
+      error: request.flash.get("error") || null,
+      success: request.flash.get("success") || null,
+    }),
     ...opts.sharedData,
   };
+
   const config = defineConfig(opts);
 
   let vite: ViteDevServer | undefined;
-
   if (process.env.NODE_ENV !== "production") {
     vite = await createViteServer(config.vite);
 
@@ -44,10 +42,16 @@ export default fp<InertiaConfig>(async function inertiaPlugin(
     });
   }
 
-  fastify.addHook("onRequest", (request, reply, done) => {
+  // Properly declare properties
+
+  // @ts-ignore
+  fastify.decorateRequest<InstanceType<typeof Flash>>("flash", undefined);
+  // @ts-ignore
+  fastify.decorateReply<InstanceType<typeof Inertia>>("inertia", undefined);
+
+  fastify.addHook("preHandler", (request, reply, done) => {
     if (!request.session) {
-      done(new Error("Flash requires fastify/session plugin."));
-      return;
+      return done(new Error("Flash requires fastify/session plugin."));
     }
 
     if (!request.session.flash) {
@@ -55,12 +59,8 @@ export default fp<InertiaConfig>(async function inertiaPlugin(
     }
 
     request.flash = new Flash(request, reply);
-
-    done();
-  });
-
-  fastify.addHook("onRequest", (request, reply, done) => {
     reply.inertia = new Inertia(request.raw, reply.raw, config, vite);
+
     done();
   });
 });
