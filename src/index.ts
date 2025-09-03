@@ -54,7 +54,7 @@ export default fp<InertiaConfig>(async function inertiaPlugin(
       request.session.flash = {};
     }
 
-    reply.flash = new Flash(request, reply);
+    request.flash = new Flash(request, reply);
 
     done();
   });
