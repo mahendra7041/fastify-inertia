@@ -5,6 +5,7 @@ import {
   Inertia,
   Flash,
   type InertiaConfig,
+  ResolvedConfig,
 } from "node-inertiajs";
 import { ViteDevServer, createServer as createViteServer } from "vite";
 
@@ -26,10 +27,21 @@ export default fp<InertiaConfig>(async function inertiaPlugin(
     throw new Error("Inertia.js configuration is required");
   }
 
+  opts.sharedData = {
+    errors: (request: FastifyRequest) => request.flash.get("errors") || {},
+    flash: (request: FastifyRequest) => ({
+      error: request.flash.get("error") || null,
+      success: request.flash.get("success") || null,
+    }),
+    ...opts.sharedData,
+  };
+
+  const config = defineConfig(opts);
+
   let vite: ViteDevServer | undefined;
 
   if (process.env.NODE_ENV !== "production") {
-    vite = await createViteServer(config.vite);
+    vite = await createViteServer(config.vite as any);
 
     fastify.addHook("onRequest", (request, reply, done) => {
       vite!.middlewares(request.raw, reply.raw, done);
@@ -48,25 +60,16 @@ export default fp<InertiaConfig>(async function inertiaPlugin(
     }
 
     // Create Flash instance and attach to request
-    request.flash = new Flash(request, reply);
+    const flash = new Flash(request as any, reply as any);
+    request.flash = flash;
+    // @ts-ignore
+    request.raw.flash = flash;
     done();
-  });
-
-  // Configure shared data AFTER flash is available
-  const config = defineConfig({
-    ...opts,
-    sharedData: {
-      errors: (request: FastifyRequest) => request.flash.get("errors") || {},
-      flash: (request: FastifyRequest) => ({
-        error: request.flash.get("error") || null,
-        success: request.flash.get("success") || null,
-      }),
-      ...opts.sharedData,
-    },
   });
 
   // Add Inertia instance to reply
   fastify.addHook("onRequest", (request, reply, done) => {
+    // @ts-ignore
     reply.inertia = new Inertia(request.raw, reply.raw, config, vite);
     done();
   });
