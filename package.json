@@ -1,6 +1,6 @@
 {
   "name": "fastify-inertiajs",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A lightweight Fastify plugin for Inertia.js that lets you build modern single-page applications with server-side rendering.",
   "main": "dist/index.js",
   "type": "module",
