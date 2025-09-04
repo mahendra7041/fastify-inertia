@@ -1,4 +1,4 @@
-# express-inertia
+# fastify-inertiajs
 
 [![npm version](https://img.shields.io/npm/v/fastify-inertiajs)](https://www.npmjs.com/package/fastify-inertiajs)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
