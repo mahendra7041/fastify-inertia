@@ -28,7 +28,7 @@
     "@types/node": "^24.3.0",
     "fastify-plugin": "^5.0.1",
     "fp": "^0.1.0",
-    "node-inertiajs": "file:../node-inertiajs"
+    "node-inertiajs": "github:alex-j-b/node-inertiajs#feat/adapter-pattern"
   },
   "devDependencies": {
     "fastify": "^5.5.0",
