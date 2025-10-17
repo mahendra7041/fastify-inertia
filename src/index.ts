@@ -7,6 +7,9 @@ import {
   type InertiaConfig,
 } from "node-inertiajs";
 import { ViteDevServer, createServer as createViteServer } from "vite";
+import { FastifyAdapter } from "./fastify_adapter.js";
+
+export { FastifyAdapter } from "./fastify_adapter.js";
 
 declare module "fastify" {
   interface FastifyReply {
@@ -68,12 +71,8 @@ export default fp<InertiaConfig>(async function inertiaPlugin(
 
   // Add Inertia instance to reply
   fastify.addHook("onRequest", (request, reply, done) => {
-    // @ts-ignore
-    reply.raw.redirect = function (statusCode, url) {
-      // @ts-ignore
-      reply.redirect(url, statusCode);
-    };
-    reply.inertia = new Inertia(request.raw, reply.raw, config, vite);
+    const adapter = new FastifyAdapter(request, reply);
+    reply.inertia = new Inertia(adapter, config, vite);
     done();
   });
 });
