@@ -51,7 +51,7 @@ export default fp<InertiaConfig>(async function inertiaPlugin(
   }
 
   // Add flash middleware FIRST
-  fastify.addHook("onRequest", (request, reply, done) => {
+  fastify.addHook("onRequest", (request, _reply, done) => {
     if (!request.session) {
       done(new Error("Flash requires fastify/session plugin."));
       return;
@@ -62,7 +62,7 @@ export default fp<InertiaConfig>(async function inertiaPlugin(
     }
 
     // Create Flash instance and attach to request
-    const flash = new Flash(request as any, reply as any);
+    const flash = new Flash(request as any);
     request.flash = flash;
     // @ts-ignore
     request.raw.flash = flash;
